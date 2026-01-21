@@ -117,7 +117,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-950 dark:to-purple-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50 dark:from-gray-900 dark:via-blue-950 dark:to-slate-950">
       <NavBar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-6">
         <Sidebar selectedModels={selectedModels} onToggleModel={toggleModel} />
@@ -221,7 +221,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => setModels([AIModel.GPT_4, AIModel.CLAUDE_3_OPUS, AIModel.GEMINI_PRO])}
-                  className="text-sm px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                  className="text-sm px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
                 >
                   Top 3 models
                 </button>
@@ -251,7 +251,7 @@ export default function Home() {
                   ${
                     isLoading
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 pulse-glow'
+                      : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 pulse-glow'
                   }
                   text-white transition-all duration-300
                   flex items-center gap-3

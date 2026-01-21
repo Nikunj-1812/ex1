@@ -27,7 +27,7 @@ export default function ResultsDashboard({ results, onNewPrompt }: ResultsDashbo
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-xl p-6 border border-blue-200 dark:border-blue-800"
+        className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-slate-950 rounded-xl p-6 border border-blue-200 dark:border-blue-800"
       >
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div className="flex-1">
@@ -134,7 +134,7 @@ export default function ResultsDashboard({ results, onNewPrompt }: ResultsDashbo
       >
         <button
           onClick={onNewPrompt}
-          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
+          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
         >
           🚀 Try Another Prompt
         </button>
