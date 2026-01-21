@@ -1,0 +1,201 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: maipaep-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_URL=postgresql://maipaep_user:maipaep_password@postgres:5432/maipaep
+      - MONGODB_URL=mongodb://maipaep_user:maipaep_password@mongodb:27017/maipaep
+      - REDIS_URL=redis://:maipaep_redis_password@redis:6379/0
+      - ENVIRONMENT=production
+      - DEBUG=false
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - ./ml:/ml
+    networks:
+      - maipaep-network
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: maipaep-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NODE_ENV=production
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - maipaep-network
+    restart: unless-stopped
+    command: npm run start
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: maipaep-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: maipaep
+      POSTGRES_USER: maipaep_user
+      POSTGRES_PASSWORD: maipaep_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - maipaep-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maipaep_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: maipaep-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: maipaep_user
+      MONGO_INITDB_ROOT_PASSWORD: maipaep_password
+      MONGO_INITDB_DATABASE: maipaep
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - maipaep-network
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Redis (Caching)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: maipaep-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass maipaep_redis_password
+    volumes:
+      - redis_data:/data
+    networks:
+      - maipaep-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Nginx (Reverse Proxy)
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: maipaep-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - maipaep-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Prometheus (Monitoring - Optional)
+  # ==========================================
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: maipaep-prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - prometheus_data:/prometheus
+  #   networks:
+  #     - maipaep-network
+  #   restart: unless-stopped
+
+  # ==========================================
+  # Grafana (Metrics Visualization - Optional)
+  # ==========================================
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: maipaep-grafana
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   depends_on:
+  #     - prometheus
+  #   networks:
+  #     - maipaep-network
+  #   restart: unless-stopped
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  # prometheus_data:
+  #   driver: local
+  # grafana_data:
+  #   driver: local
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  maipaep-network:
+    driver: bridge
